@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.DecodeHintType;
@@ -88,8 +89,10 @@ public class CaptureActivity extends Activity implements Callback {
                         characterSet, cameraManager);
             }
         } catch (IOException ioe) {
+
         } catch (RuntimeException e) {
             e.printStackTrace();
+            Toast.makeText(this, "œ‡ª˙“Ï≥£", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -125,7 +128,7 @@ public class CaptureActivity extends Activity implements Callback {
     public void handleDecode(Result rawResult, Bitmap barcode, float scaleFactor) {
 
         // inactivityTimer.onActivity();
-//        viewfinderView.drawResultBitmap(barcode);
+        // viewfinderView.drawResultBitmap(barcode);
         // playBeepSoundAndVibrate();
         // txtResult.setText(obj.getBarcodeFormat().toString() +":"
         // + obj.getText());
