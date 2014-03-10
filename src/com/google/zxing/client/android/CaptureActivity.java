@@ -73,7 +73,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private Result lastResult;
   private boolean hasSurface;
   private IntentSource source;
-  private String sourceUrl;
   private Collection<BarcodeFormat> decodeFormats;
   private Map<DecodeHintType,?> decodeHints;
   private String characterSet;
@@ -180,7 +179,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
         // Scan only products and send the result to mobile Product Search.
         source = IntentSource.PRODUCT_SEARCH_LINK;
-        sourceUrl = dataString;
         decodeFormats = DecodeFormatManager.PRODUCT_FORMATS;
 
       } else if (isZXingURL(dataString)) {
@@ -188,7 +186,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         // Scan formats requested in query string (all formats if none specified).
         // If a return URL is specified, send the results there. Otherwise, handle it ourselves.
         source = IntentSource.ZXING_LINK;
-        sourceUrl = dataString;
         Uri inputUri = Uri.parse(dataString);
         decodeFormats = DecodeFormatManager.parseDecodeFormats(inputUri);
         // Allow a sub-set of the hints to be specified by the caller.
@@ -315,6 +312,9 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     lastResult = rawResult;
     beepManager.playBeepSoundAndVibrate();
     finish();
+    String text=lastResult.getText();
+    Log.d(TAG, text);
+    
    
   }
 
