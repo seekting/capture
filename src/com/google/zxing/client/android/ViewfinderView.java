@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
@@ -56,6 +57,12 @@ public final class ViewfinderView extends View {
   private List<ResultPoint> possibleResultPoints;
   private List<ResultPoint> lastPossibleResultPoints;
 
+  private float aroundWidth;
+  private float aroundLength;
+  private int scanningLinePosition=0;
+  private static final int MAX_POSITION = 100;  
+  private static final int OVER_POSITION = 150;
+  private static final int SPEED = 2;
   // This constructor is used when the class is built from an XML resource.
   public ViewfinderView(Context context, AttributeSet attrs) {
     super(context, attrs);
@@ -70,6 +77,8 @@ public final class ViewfinderView extends View {
     scannerAlpha = 0;
     possibleResultPoints = new ArrayList<ResultPoint>(5);
     lastPossibleResultPoints = null;
+    aroundWidth = resources.getDisplayMetrics().density * 4;
+    aroundLength = resources.getDisplayMetrics().density * 18;
   }
 
   public void setCameraManager(CameraManager cameraManager) {
@@ -102,12 +111,9 @@ public final class ViewfinderView extends View {
       canvas.drawBitmap(resultBitmap, null, frame, paint);
     } else {
 
-      // Draw a red "laser scanner" line through the middle to show decoding is active
-      paint.setColor(laserColor);
-      paint.setAlpha(SCANNER_ALPHA[scannerAlpha]);
-      scannerAlpha = (scannerAlpha + 1) % SCANNER_ALPHA.length;
-      int middle = frame.height() / 2 + frame.top;
-      canvas.drawRect(frame.left + 2, middle - 1, frame.right - 1, middle + 2, paint);
+//      drawLaser(canvas, frame);
+      drawAround(canvas, frame);
+      drawScanningLine(canvas, frame);
       
       float scaleX = frame.width() / (float) previewFrame.width();
       float scaleY = frame.height() / (float) previewFrame.height();
@@ -152,6 +158,77 @@ public final class ViewfinderView extends View {
                             frame.right + POINT_SIZE,
                             frame.bottom + POINT_SIZE);
     }
+  }
+
+private void drawLaser(Canvas canvas, Rect frame) {
+    // Draw a red "laser scanner" line through the middle to show decoding is active
+      paint.setColor(laserColor);
+      paint.setAlpha(SCANNER_ALPHA[scannerAlpha]);
+      scannerAlpha = (scannerAlpha + 1) % SCANNER_ALPHA.length;
+      int middle = frame.height() / 2 + frame.top;
+      canvas.drawRect(frame.left + 2, middle - 1, frame.right - 1, middle + 2, paint);
+}
+  /**
+   * 画四个角
+   * @param canvas
+   * @param frame
+   */
+  private void drawAround(Canvas canvas, Rect frame) {
+      paint.setColor(Color.GREEN);
+//      canvas.drawRect(frame, paint);
+      int beginLeft = frame.left + 2;
+      int beginTop = frame.top + 2;
+      int endRight = frame.right - 2;
+      int endBottom = frame.bottom - 2;
+      // left,top -
+      canvas.drawRect(beginLeft, beginTop, beginLeft + aroundLength, beginTop
+              + aroundWidth,
+              paint);
+      // left,top |
+      canvas.drawRect(beginLeft, beginTop, beginLeft + aroundWidth, beginTop + aroundLength,
+              paint);
+      // right,top -
+      canvas.drawRect(endRight - aroundLength, beginTop, endRight, beginTop
+              + aroundWidth,
+              paint);
+      // right,top |
+      canvas.drawRect(endRight - aroundWidth, beginTop, endRight, beginTop + aroundLength,
+              paint);
+      // left,bottom -
+      canvas.drawRect(beginLeft, endBottom - aroundWidth, beginLeft + aroundLength, endBottom
+              ,
+              paint);
+      // left,bottom |
+      canvas.drawRect(beginLeft, endBottom - aroundLength, beginLeft + aroundWidth, endBottom,
+              paint);
+      // right,bottom -
+      canvas.drawRect(endRight - aroundLength, endBottom - aroundWidth, endRight, endBottom
+              ,
+              paint);
+      // right,bottom |
+      canvas.drawRect(endRight - aroundWidth, endBottom - aroundLength, endRight, endBottom,
+              paint);
+  }
+
+  /**
+   * 
+   * @param canvas
+   * @param frame
+   */
+  private void drawScanningLine(Canvas canvas, Rect frame) {
+      if (scanningLinePosition <= MAX_POSITION) {
+          float y = frame.top + 2 + scanningLinePosition / (MAX_POSITION * 1f)
+                  * (frame.bottom - frame.top);
+          // canvas.drawLine(frame.left, y, frame.right, y, paint);
+          System.out.println("y->" + y);
+          canvas.drawRect(frame.left+10, y - 1, frame.right - 10, y + 1, paint);
+      }
+      if (scanningLinePosition > OVER_POSITION) {
+          scanningLinePosition = 0;
+      } else {
+          scanningLinePosition += SPEED;
+      }
+
   }
 
   public void drawViewfinder() {
