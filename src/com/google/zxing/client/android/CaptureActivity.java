@@ -17,16 +17,14 @@
 package com.google.zxing.client.android;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Map;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -41,12 +39,16 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.DecodeHintType;
 import com.google.zxing.Result;
-import com.google.zxing.ResultMetadataType;
 import com.google.zxing.client.android.camera.CameraManager;
+import com.google.zxing.client.result.AddressBookParsedResult;
+import com.google.zxing.client.result.ParsedResult;
+import com.google.zxing.client.result.ResultParser;
+import com.google.zxing.client.result.URIParsedResult;
 
 /**
  * This activity opens the camera and does the actual scanning on a background thread. It draws a
@@ -102,7 +104,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     hasSurface = false;
     inactivityTimer = new InactivityTimer(this);
     beepManager = new BeepManager(this);
-
+    decodeFormats = new ArrayList<BarcodeFormat>();
+    decodeFormats.add(BarcodeFormat.QR_CODE);
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
   }
 
@@ -145,57 +148,10 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     Intent intent = getIntent();
 
     source = IntentSource.NONE;
-    decodeFormats = null;
     characterSet = null;
-
-    if (intent != null) {
-
-      String action = intent.getAction();
-      String dataString = intent.getDataString();
-
-      if (Intents.Scan.ACTION.equals(action)) {
-
-        // Scan the formats the intent requested, and return the result to the calling activity.
-        source = IntentSource.NATIVE_APP_INTENT;
-        decodeFormats = DecodeFormatManager.parseDecodeFormats(intent);
-        decodeHints = DecodeHintManager.parseDecodeHints(intent);
-
-        if (intent.hasExtra(Intents.Scan.WIDTH) && intent.hasExtra(Intents.Scan.HEIGHT)) {
-          int width = intent.getIntExtra(Intents.Scan.WIDTH, 0);
-          int height = intent.getIntExtra(Intents.Scan.HEIGHT, 0);
-          if (width > 0 && height > 0) {
-            cameraManager.setManualFramingRect(width, height);
-          }
-        }
-        
-        String customPromptMessage = intent.getStringExtra(Intents.Scan.PROMPT_MESSAGE);
-        if (customPromptMessage != null) {
-          statusView.setText(customPromptMessage);
-        }
-
-      } else if (dataString != null &&
-                 dataString.contains("http://www.google") &&
-                 dataString.contains("/m/products/scan")) {
-
-        // Scan only products and send the result to mobile Product Search.
-        source = IntentSource.PRODUCT_SEARCH_LINK;
-        decodeFormats = DecodeFormatManager.PRODUCT_FORMATS;
-
-      } else if (isZXingURL(dataString)) {
-
-        // Scan formats requested in query string (all formats if none specified).
-        // If a return URL is specified, send the results there. Otherwise, handle it ourselves.
-        source = IntentSource.ZXING_LINK;
-        Uri inputUri = Uri.parse(dataString);
-        decodeFormats = DecodeFormatManager.parseDecodeFormats(inputUri);
-        // Allow a sub-set of the hints to be specified by the caller.
-        decodeHints = DecodeHintManager.parseDecodeHints(inputUri);
-
-      }
 
       characterSet = intent.getStringExtra(Intents.Scan.CHARACTER_SET);
 
-    }
   }
   
   private static boolean isZXingURL(String dataString) {
@@ -311,11 +267,28 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     inactivityTimer.onActivity();
     lastResult = rawResult;
     beepManager.playBeepSoundAndVibrate();
+    ParsedResult parsedResult=ResultParser.parseResult(rawResult);
+    String text=null;
+    switch (parsedResult.getType()) {
+        case ADDRESSBOOK:
+            AddressBookParsedResult addressBookParsedResult=(AddressBookParsedResult) parsedResult;
+            String[] address=addressBookParsedResult.getAddresses();
+            text="名片";
+            if(address!=null && address.length>0){
+                text=text+address[0];
+            }
+            break;
+        case URI:
+            URIParsedResult uriResult = (URIParsedResult) parsedResult;
+            String uri = uriResult.getURI();
+            text="网页"+uri;
+            break;
+        default:
+            text="文字"+parsedResult.getDisplayResult();
+            break;
+    }
+    Toast.makeText(this, text, Toast.LENGTH_LONG).show();
     finish();
-    String text=lastResult.getText();
-    Log.d(TAG, text);
-    
-   
   }
 
 
