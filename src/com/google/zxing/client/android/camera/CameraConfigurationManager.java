@@ -135,12 +135,13 @@ final class CameraConfigurationManager {
       }
 
       if (!prefs.getBoolean(PreferencesActivity.KEY_DISABLE_METERING, true)) {
-        if (parameters.isVideoStabilizationSupported()) {
-          Log.i(TAG, "Enabling video stabilization...");
-          parameters.setVideoStabilization(true);
-        } else {
-          Log.i(TAG, "This device does not support video stabilization");
-        }
+          //4.3SDK
+//        if (parameters.isVideoStabilizationSupported()) {
+//          Log.i(TAG, "Enabling video stabilization...");
+//          parameters.setVideoStabilization(true);
+//        } else {
+//          Log.i(TAG, "This device does not support video stabilization");
+//        }
 
         MeteringInterface.setFocusArea(parameters);
         MeteringInterface.setMetering(parameters);
