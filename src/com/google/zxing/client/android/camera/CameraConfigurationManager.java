@@ -64,17 +64,24 @@ final class CameraConfigurationManager {
   /**
    * Reads, one time, values from the camera that are needed by the app.
    */
-  void initFromCameraParameters(Camera camera) {
-    Camera.Parameters parameters = camera.getParameters();
-    WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-    Display display = manager.getDefaultDisplay();
-    Point theScreenResolution = new Point();
-    display.getSize(theScreenResolution);
-    screenResolution = theScreenResolution;
-    Log.i(TAG, "Screen resolution: " + screenResolution);
-    cameraResolution = findBestPreviewSizeValue(parameters, screenResolution);
-    Log.i(TAG, "Camera resolution: " + cameraResolution);
-  }
+    void initFromCameraParameters(Camera camera) {
+        Camera.Parameters parameters = camera.getParameters();
+        WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = manager.getDefaultDisplay();
+        Point theScreenResolution = new Point();
+        display.getSize(theScreenResolution);
+        screenResolution = theScreenResolution;
+        Log.i(TAG, "Screen resolution: " + screenResolution);
+        Point screenResolutionForCamera = new Point();
+        screenResolutionForCamera.x = screenResolution.x;
+        screenResolutionForCamera.y = screenResolution.y;
+        if (screenResolution.x < screenResolution.y) {
+            screenResolutionForCamera.x = screenResolution.y;
+            screenResolutionForCamera.y = screenResolution.x;
+        }
+        cameraResolution = findBestPreviewSizeValue(parameters,screenResolutionForCamera);
+        Log.i(TAG, "Camera resolution: " + cameraResolution);
+    }
 
   void setDesiredCameraParameters(Camera camera, boolean safeMode) {
     Camera.Parameters parameters = camera.getParameters();
@@ -150,6 +157,7 @@ final class CameraConfigurationManager {
     }
 
     parameters.setPreviewSize(cameraResolution.x, cameraResolution.y);
+    camera.setDisplayOrientation(90); 
     camera.setParameters(parameters);
 
     Camera.Parameters afterParameters = camera.getParameters();

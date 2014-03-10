@@ -16,17 +16,19 @@
 
 package com.google.zxing.client.android.camera;
 
+import java.io.IOException;
+
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.SurfaceHolder;
+
 import com.google.zxing.PlanarYUVLuminanceSource;
 import com.google.zxing.client.android.camera.open.OpenCameraInterface;
-
-import java.io.IOException;
 
 /**
  * This object wraps the Camera service object and expects to be the only one talking to it. The
@@ -187,27 +189,27 @@ public final class CameraManager {
    *
    * @return The rectangle to draw on screen in window coordinates.
    */
-  public synchronized Rect getFramingRect() {
-    if (framingRect == null) {
-      if (camera == null) {
-        return null;
-      }
-      Point screenResolution = configManager.getScreenResolution();
-      if (screenResolution == null) {
-        // Called early, before init even finished
-        return null;
-      }
+    public synchronized Rect getFramingRect() {
+        if (framingRect == null) {
+            if (camera == null) {
+                return null;
+            }
+            Point screenResolution = configManager.getScreenResolution();
+            if (screenResolution == null) {
+                // Called early, before init even finished
+                return null;
+            }
+            DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+            int width = (int) (metrics.widthPixels * 0.6);
+            int height = (int) (width * 0.9);
 
-      int width = findDesiredDimensionInRange(screenResolution.x, MIN_FRAME_WIDTH, MAX_FRAME_WIDTH);
-      int height = findDesiredDimensionInRange(screenResolution.y, MIN_FRAME_HEIGHT, MAX_FRAME_HEIGHT);
-
-      int leftOffset = (screenResolution.x - width) / 2;
-      int topOffset = (screenResolution.y - height) / 2;
-      framingRect = new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
-      Log.d(TAG, "Calculated framing rect: " + framingRect);
+            int leftOffset = (screenResolution.x - width) / 2;
+            int topOffset = (screenResolution.y - height) / 2;
+            framingRect = new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
+            Log.d(TAG, "Calculated framing rect: " + framingRect);
+        }
+        return framingRect;
     }
-    return framingRect;
-  }
   
   private static int findDesiredDimensionInRange(int resolution, int hardMin, int hardMax) {
     int dim = 5 * resolution / 8; // Target 5/8 of each dimension
@@ -237,10 +239,13 @@ public final class CameraManager {
         // Called early, before init even finished
         return null;
       }
-      rect.left = rect.left * cameraResolution.x / screenResolution.x;
-      rect.right = rect.right * cameraResolution.x / screenResolution.x;
-      rect.top = rect.top * cameraResolution.y / screenResolution.y;
-      rect.bottom = rect.bottom * cameraResolution.y / screenResolution.y;
+            rect.left = rect.left * cameraResolution.y / screenResolution.x;
+            rect.right = rect.right * cameraResolution.y / screenResolution.x;
+            rect.top = rect.top * cameraResolution.x / screenResolution.y;
+            rect.bottom = rect.bottom * cameraResolution.x / screenResolution.y;
+
+
+
       framingRectInPreview = rect;
     }
     return framingRectInPreview;
